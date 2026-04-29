@@ -1,0 +1,16 @@
+account_code,account_name,category,subcategory
+4001,Food Revenue,Revenue,Food & Beverage Revenue
+4002,Beverage Revenue,Revenue,Food & Beverage Revenue
+4003,Room Revenue,Revenue,Room Revenue
+5001,Food Cost,Cost of Goods Sold,Food Cost
+5002,Beverage Cost,Cost of Goods Sold,Beverage Cost
+6001,Salaries & Wages,Operating Expense,Labor Cost
+6002,Utilities,Operating Expense,Utilities
+6003,Rent,Operating Expense,Rent & Occupancy
+6004,Marketing,Operating Expense,Marketing
+6005,Maintenance,Operating Expense,Maintenance
+6006,Supplies,Operating Expense,Supplies
+7001,Depreciation,Other Expense,Depreciation
+7002,Interest Expense,Other Expense,Finance Cost
+1001,Cash & Bank,Balance Sheet,Current Asset
+1100,Accounts Receivable,Balance Sheet,Current Asset

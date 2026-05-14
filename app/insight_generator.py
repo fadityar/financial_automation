@@ -33,9 +33,9 @@ def _pct_change(current: float, previous: float) -> float:
 def _format_idr(amount: float) -> str:
     """Format angka ke Rupiah singkat."""
     if abs(amount) >= 1_000_000_000:
-        return f"Rp {amount/1_000_000_000:.1f}M"
+        return f"Rp {amount/1_000_000_000:.1f}B"
     elif abs(amount) >= 1_000_000:
-        return f"Rp {amount/1_000_000:.1f} jt"
+        return f"Rp {amount/1_000_000:.1f}M"
     else:
         return f"Rp {amount:,.0f}"
 
@@ -52,7 +52,7 @@ def generate_insights(pl_summary: pd.DataFrame, expense_breakdown: pd.DataFrame)
     positives = []
 
     if pl_summary.empty:
-        return {"insights": ["Data tidak cukup untuk generate insight."], "alerts": [], "positives": [], "summary_text": ""}
+        return {"insights": ["Not enough data to generate insights."], "alerts": [], "positives": [], "summary_text": ""}
 
     months = pl_summary["month"].tolist()
     latest = pl_summary.iloc[-1]
@@ -64,29 +64,29 @@ def generate_insights(pl_summary: pd.DataFrame, expense_breakdown: pd.DataFrame)
         rev_change = _pct_change(latest["total_revenue"], prev["total_revenue"])
         if rev_change >= THRESHOLDS["revenue_growth_good"]:
             positives.append(
-                f"✅ Revenue {latest['month']} naik {rev_change:.1f}% dibanding {prev['month']} "
+                f"✅ Revenue for {latest['month']} increased {rev_change:.1f}% compared with {prev['month']} "
                 f"({_format_idr(prev['total_revenue'])} → {_format_idr(latest['total_revenue'])})"
             )
         elif rev_change <= THRESHOLDS["revenue_decline_warn"]:
             alerts.append(
-                f"⚠️ Revenue turun {abs(rev_change):.1f}% dari {prev['month']} ke {latest['month']}. "
-                f"Perlu investigasi segera."
+                f"⚠️ Revenue dropped {abs(rev_change):.1f}% from {prev['month']} to {latest['month']}. "
+                f"Immediate investigation is recommended."
             )
         else:
             insights.append(
                 f"📊 Revenue {latest['month']}: {_format_idr(latest['total_revenue'])} "
-                f"({rev_change:+.1f}% vs bulan lalu)"
+                f"({rev_change:+.1f}% vs last month)"
             )
 
         # Profit change
         profit_change = _pct_change(latest["net_profit"], prev["net_profit"])
         if profit_change > 15:
             positives.append(
-                f"✅ Net Profit meningkat signifikan {profit_change:.1f}% → {_format_idr(latest['net_profit'])}"
+                f"✅ Net profit increased significantly by {profit_change:.1f}% → {_format_idr(latest['net_profit'])}"
             )
         elif profit_change < -10:
             alerts.append(
-                f"⚠️ Net Profit turun {abs(profit_change):.1f}% ke {_format_idr(latest['net_profit'])}. "
+                f"⚠️ Net profit dropped {abs(profit_change):.1f}% to {_format_idr(latest['net_profit'])}. "
                 f"Review cost structure."
             )
 
@@ -94,8 +94,8 @@ def generate_insights(pl_summary: pd.DataFrame, expense_breakdown: pd.DataFrame)
         cogs_change = _pct_change(latest["total_cogs"], prev["total_cogs"])
         if cogs_change > rev_change + 5:
             alerts.append(
-                f"⚠️ COGS naik {cogs_change:.1f}% lebih cepat dari revenue ({rev_change:.1f}%). "
-                f"Gross margin tertekan."
+                f"⚠️ COGS increased {cogs_change:.1f}% faster than revenue ({rev_change:.1f}%). "
+                f"Gross margin is under pressure."
             )
 
     # ── 2. Food Cost % ──────────────────────────────────────────────────────
@@ -104,16 +104,16 @@ def generate_insights(pl_summary: pd.DataFrame, expense_breakdown: pd.DataFrame)
         alerts.append(
             f"🚨 CRITICAL: Food Cost {latest['month']} = {fc_pct:.1f}% "
             f"(threshold: {THRESHOLDS['food_cost_critical']}%). "
-            f"Review menu pricing dan purchasing segera!"
+            f"Review menu pricing and purchasing immediately."
         )
     elif fc_pct >= THRESHOLDS["food_cost_warning"]:
         alerts.append(
-            f"⚠️ Food Cost {latest['month']} = {fc_pct:.1f}% melebihi batas ideal "
-            f"{THRESHOLDS['food_cost_warning']}%. Perlu cost control."
+            f"⚠️ Food cost for {latest['month']} = {fc_pct:.1f}%, above the ideal limit of "
+            f"{THRESHOLDS['food_cost_warning']}%. Cost control is needed."
         )
     else:
         positives.append(
-            f"✅ Food Cost terkontrol di {fc_pct:.1f}% (under threshold {THRESHOLDS['food_cost_warning']}%)"
+            f"✅ Food cost is controlled at {fc_pct:.1f}% (under threshold {THRESHOLDS['food_cost_warning']}%)"
         )
 
     # ── 3. Labor Cost % ─────────────────────────────────────────────────────
@@ -125,24 +125,24 @@ def generate_insights(pl_summary: pd.DataFrame, expense_breakdown: pd.DataFrame)
         )
     elif lc_pct >= THRESHOLDS["labor_cost_warning"]:
         alerts.append(
-            f"⚠️ Labor Cost {latest['month']} = {lc_pct:.1f}% di atas batas ideal "
+            f"⚠️ Labor cost for {latest['month']} = {lc_pct:.1f}%, above the ideal limit of "
             f"{THRESHOLDS['labor_cost_warning']}%."
         )
     else:
         positives.append(
-            f"✅ Labor Cost efisien di {lc_pct:.1f}% (under threshold {THRESHOLDS['labor_cost_warning']}%)"
+            f"✅ Labor cost is efficient at {lc_pct:.1f}% (under threshold {THRESHOLDS['labor_cost_warning']}%)"
         )
 
     # ── 4. Net Margin Analysis ───────────────────────────────────────────────
     nm_pct = latest["net_margin_%"]
     if nm_pct >= THRESHOLDS["net_margin_good"]:
         positives.append(
-            f"✅ Net Margin sangat baik di {nm_pct:.1f}% (target: >{THRESHOLDS['net_margin_good']}%)"
+            f"✅ Net margin is excellent at {nm_pct:.1f}% (target: >{THRESHOLDS['net_margin_good']}%)"
         )
     elif nm_pct < THRESHOLDS["net_margin_warning"]:
         alerts.append(
-            f"⚠️ Net Margin {nm_pct:.1f}% di bawah threshold {THRESHOLDS['net_margin_warning']}%. "
-            f"Profitabilitas perlu ditingkatkan."
+            f"⚠️ Net margin {nm_pct:.1f}% is below the {THRESHOLDS['net_margin_warning']}% threshold. "
+            f"Profitability needs improvement."
         )
     else:
         insights.append(f"📊 Net Margin {latest['month']}: {nm_pct:.1f}%")
@@ -167,12 +167,12 @@ def generate_insights(pl_summary: pd.DataFrame, expense_breakdown: pd.DataFrame)
 
                     if chg > 20:
                         alerts.append(
-                            f"⚠️ {subcat} naik signifikan {chg:.1f}% "
+                            f"⚠️ {subcat} increased significantly by {chg:.1f}% "
                             f"({_format_idr(prev_amt)} → {_format_idr(curr_amt)})"
                         )
                     elif chg > 10:
                         insights.append(
-                            f"📊 {subcat} meningkat {chg:.1f}% di {latest_month}"
+                            f"📊 {subcat} increased {chg:.1f}% in {latest_month}"
                         )
 
     # ── 6. Trend Analysis (3+ bulan) ────────────────────────────────────────
@@ -183,8 +183,8 @@ def generate_insights(pl_summary: pd.DataFrame, expense_breakdown: pd.DataFrame)
         if is_growing:
             total_growth = _pct_change(revenues[-1], revenues[0])
             positives.append(
-                f"✅ Tren positif: Revenue tumbuh konsisten selama {len(revenues)} bulan terakhir "
-                f"(+{total_growth:.1f}% dari {months[0]} ke {months[-1]})"
+                f"✅ Positive trend: revenue has grown consistently over the last {len(revenues)} months "
+                f"(+{total_growth:.1f}% from {months[0]} to {months[-1]})"
             )
 
         # Cek apakah net profit konsisten
@@ -192,14 +192,14 @@ def generate_insights(pl_summary: pd.DataFrame, expense_breakdown: pd.DataFrame)
         is_profit_growing = all(profits[i] < profits[i+1] for i in range(len(profits)-1))
         if is_profit_growing:
             positives.append(
-                f"✅ Net Profit tumbuh konsisten {len(profits)} bulan berturut-turut"
+                f"✅ Net profit has grown consistently for {len(profits)} consecutive months"
             )
 
     # ── 7. Summary Text ─────────────────────────────────────────────────────
     summary_lines = [
         f"=== INSIGHT REPORT: {latest['month']} ===",
         f"",
-        f"📈 KINERJA BULAN INI:",
+        f"📈 THIS MONTH'S PERFORMANCE:",
         f"   • Revenue      : {_format_idr(latest['total_revenue'])}",
         f"   • Gross Profit : {_format_idr(latest['gross_profit'])} ({latest['gross_margin_%']:.1f}%)",
         f"   • Net Profit   : {_format_idr(latest['net_profit'])} ({latest['net_margin_%']:.1f}%)",
@@ -209,19 +209,19 @@ def generate_insights(pl_summary: pd.DataFrame, expense_breakdown: pd.DataFrame)
     ]
 
     if positives:
-        summary_lines.append("🟢 POSITIF:")
+        summary_lines.append("🟢 POSITIVE:")
         for p in positives:
             summary_lines.append(f"   {p}")
         summary_lines.append("")
 
     if alerts:
-        summary_lines.append("🔴 PERHATIAN:")
+        summary_lines.append("🔴 ATTENTION:")
         for a in alerts:
             summary_lines.append(f"   {a}")
         summary_lines.append("")
 
     if insights:
-        summary_lines.append("💡 INSIGHT LAIN:")
+        summary_lines.append("💡 OTHER INSIGHTS:")
         for i in insights:
             summary_lines.append(f"   {i}")
 

@@ -87,8 +87,8 @@ with st.sidebar:
     try:
         df, pl_summary, expense_breakdown, general_ledger = load_data()
         months_available = pl_summary["month"].tolist()
-        selected_month = st.selectbox("📅 Pilih Bulan", months_available, index=len(months_available)-1)
-        st.success(f"✅ {len(months_available)} bulan loaded")
+        selected_month = st.selectbox("📅 Select Month", months_available, index=len(months_available)-1)
+        st.success(f"✅ {len(months_available)} months loaded")
     except Exception as e:
         st.error(f"Error loading data: {e}")
         st.stop()
@@ -101,7 +101,7 @@ with st.sidebar:
 
 # ── Main Content ─────────────────────────────────────────────────────────────
 st.title("📊 Financial Performance Dashboard")
-st.caption(f"Hospitality Financial Analytics | Data terupdate otomatis dari folder /data")
+st.caption(f"Hospitality Financial Analytics | Data updates automatically from the /data folder")
 
 latest_pl = pl_summary[pl_summary["month"] == selected_month].iloc[0]
 
@@ -112,7 +112,7 @@ k1, k2, k3, k4, k5 = st.columns(5)
 def format_idr_short(val):
     if abs(val) >= 1e9:
         return f"Rp {val/1e9:.1f}M"
-    return f"Rp {val/1e6:.1f} jt"
+    return f"Rp {val/1e6:.1f}M"
 
 # Hitung delta vs bulan sebelumnya
 def get_delta(col):
@@ -238,32 +238,32 @@ st.subheader("🤖 Auto Insight Generator")
 
 insight_data = generate_insights(pl_summary, expense_breakdown)
 
-tab1, tab2, tab3 = st.tabs(["🔴 Alerts", "🟢 Positif", "💡 Insight"])
+tab1, tab2, tab3 = st.tabs(["🔴 Alerts", "🟢 Positive", "💡 Insight"])
 
 with tab1:
     if insight_data["alerts"]:
         for alert in insight_data["alerts"]:
             st.markdown(f'<div class="alert-box">{alert}</div>', unsafe_allow_html=True)
     else:
-        st.success("Tidak ada alert untuk periode ini.")
+        st.success("No alerts for this period.")
 
 with tab2:
     if insight_data["positives"]:
         for pos in insight_data["positives"]:
             st.markdown(f'<div class="insight-box">{pos}</div>', unsafe_allow_html=True)
     else:
-        st.info("Tidak ada highlight positif.")
+        st.info("No positive highlights.")
 
 with tab3:
     if insight_data["insights"]:
         for ins in insight_data["insights"]:
             st.info(ins)
     else:
-        st.info("Tidak ada insight tambahan.")
+        st.info("No additional insights.")
 
 # ── P&L Table ────────────────────────────────────────────────────────────────
 st.markdown("---")
-with st.expander("📋 Lihat P&L Summary Table"):
+with st.expander("📋 View P&L Summary Table"):
     st.dataframe(
         pl_summary.style.format({
             "total_revenue": "{:,.0f}",
@@ -281,7 +281,7 @@ with st.expander("📋 Lihat P&L Summary Table"):
         use_container_width=True
     )
 
-with st.expander("📋 Lihat General Ledger"):
+with st.expander("📋 View General Ledger"):
     st.dataframe(general_ledger, use_container_width=True)
 
 # ── Footer ───────────────────────────────────────────────────────────────────

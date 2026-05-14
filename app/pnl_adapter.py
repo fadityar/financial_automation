@@ -144,7 +144,7 @@ def build_insights_from_pnl(summary_df: pd.DataFrame) -> dict:
     positives = []
 
     if summary_df.empty or len(summary_df) < 2:
-        return {'insights': [], 'alerts': [], 'positives': [], 'summary_text': 'Data tidak cukup.'}
+        return {'insights': [], 'alerts': [], 'positives': [], 'summary_text': 'Not enough data.'}
 
     latest = summary_df.iloc[0]   # Bulan terbaru (Mar 2026)
     prev   = summary_df.iloc[1]   # Bulan sebelumnya (Feb 2026)
@@ -154,68 +154,68 @@ def build_insights_from_pnl(summary_df: pd.DataFrame) -> dict:
 
     def fmt(val):
         if abs(val) >= 1e9:
-            return f"Rp {val/1e9:.2f}M"
-        return f"Rp {val/1e6:.1f} jt"
+            return f"Rp {val/1e9:.2f}B"
+        return f"Rp {val/1e6:.1f}M"
 
     # --- Revenue ---
     rev_chg = pct_chg(latest['total_revenue'], prev['total_revenue'])
     if rev_chg >= 10:
-        positives.append(f"✅ Revenue naik {rev_chg:.1f}% vs {prev['month']} ({fmt(prev['total_revenue'])} → {fmt(latest['total_revenue'])})")
+        positives.append(f"✅ Revenue increased {rev_chg:.1f}% vs {prev['month']} ({fmt(prev['total_revenue'])} → {fmt(latest['total_revenue'])})")
     elif rev_chg <= -10:
-        alerts.append(f"⚠️ Revenue TURUN {abs(rev_chg):.1f}% dari {prev['month']} ke {latest['month']} ({fmt(prev['total_revenue'])} → {fmt(latest['total_revenue'])}). Perlu investigasi!")
+        alerts.append(f"⚠️ Revenue dropped {abs(rev_chg):.1f}% from {prev['month']} to {latest['month']} ({fmt(prev['total_revenue'])} → {fmt(latest['total_revenue'])}). Needs investigation.")
     else:
         insights.append(f"📊 Revenue {latest['month']}: {fmt(latest['total_revenue'])} ({rev_chg:+.1f}% vs {prev['month']})")
 
     # --- Net Income ---
     net_chg = pct_chg(latest['net_income'], prev['net_income'])
     if latest['net_income'] < 0:
-        alerts.append(f"🚨 Net Income NEGATIF: {fmt(latest['net_income'])}. Bisnis dalam kondisi rugi bulan ini!")
+        alerts.append(f"🚨 Negative net income: {fmt(latest['net_income'])}. The business is operating at a loss this month.")
     elif latest['net_margin_%'] >= 30:
-        positives.append(f"✅ Net Margin sangat baik: {latest['net_margin_%']:.1f}% ({fmt(latest['net_income'])})")
+        positives.append(f"✅ Excellent net margin: {latest['net_margin_%']:.1f}% ({fmt(latest['net_income'])})")
     elif latest['net_margin_%'] < 10:
-        alerts.append(f"⚠️ Net Margin rendah: {latest['net_margin_%']:.1f}%. Target minimal 15-20% untuk resort.")
+        alerts.append(f"⚠️ Low net margin: {latest['net_margin_%']:.1f}%. Minimum target for a resort is 15-20%.")
     else:
         insights.append(f"📊 Net Income {latest['month']}: {fmt(latest['net_income'])} | Margin: {latest['net_margin_%']:.1f}%")
 
     # --- EBITDA ---
     if latest['ebitda'] < 0:
-        alerts.append(f"🚨 EBITDA NEGATIF ({fmt(latest['ebitda'])}). Core bisnis bermasalah — review operasional mendesak!")
+        alerts.append(f"🚨 Negative EBITDA ({fmt(latest['ebitda'])}). Core business performance is under pressure. Urgent operational review needed.")
     elif latest['ebitda_margin_%'] >= 35:
-        positives.append(f"✅ EBITDA Margin kuat di {latest['ebitda_margin_%']:.1f}% ({fmt(latest['ebitda'])})")
+        positives.append(f"✅ Strong EBITDA margin at {latest['ebitda_margin_%']:.1f}% ({fmt(latest['ebitda'])})")
     else:
         insights.append(f"📊 EBITDA: {fmt(latest['ebitda'])} | Margin: {latest['ebitda_margin_%']:.1f}%")
 
     # --- COGS % ---
     if latest['cogs_%'] > 25:
-        alerts.append(f"⚠️ COGS {latest['cogs_%']:.1f}% dari revenue — cukup tinggi untuk resort. Target ideal < 20%.")
+        alerts.append(f"⚠️ COGS is {latest['cogs_%']:.1f}% of revenue, which is high for a resort. Ideal target is below 20%.")
     else:
-        positives.append(f"✅ COGS terkontrol di {latest['cogs_%']:.1f}% dari revenue")
+        positives.append(f"✅ COGS is controlled at {latest['cogs_%']:.1f}% of revenue")
 
     # --- Labor / Payroll ---
     if latest['labor_cost_%'] > 40:
-        alerts.append(f"⚠️ Labor Cost {latest['labor_cost_%']:.1f}% dari revenue ({fmt(latest['total_payroll'])}). Di atas threshold 40% untuk resort luxury.")
+        alerts.append(f"⚠️ Labor cost is {latest['labor_cost_%']:.1f}% of revenue ({fmt(latest['total_payroll'])}), above the 40% threshold for a luxury resort.")
     elif latest['labor_cost_%'] > 35:
-        insights.append(f"📊 Labor Cost {latest['labor_cost_%']:.1f}% — mendekati batas. Monitor staffing efficiency.")
+        insights.append(f"📊 Labor cost is {latest['labor_cost_%']:.1f}%, close to the limit. Monitor staffing efficiency.")
     else:
-        positives.append(f"✅ Labor Cost efisien di {latest['labor_cost_%']:.1f}%")
+        positives.append(f"✅ Labor cost is efficient at {latest['labor_cost_%']:.1f}%")
 
     # --- Energy ---
     energy_pct = (latest['total_energy'] / latest['total_revenue'] * 100) if latest['total_revenue'] != 0 else 0
     energy_chg = pct_chg(latest['total_energy'], prev['total_energy'])
     if energy_pct > 10:
-        alerts.append(f"⚠️ Energy Cost {energy_pct:.1f}% dari revenue ({fmt(latest['total_energy'])}). Perlu audit efisiensi energi.")
+        alerts.append(f"⚠️ Energy cost is {energy_pct:.1f}% of revenue ({fmt(latest['total_energy'])}). Energy efficiency audit recommended.")
     if energy_chg > 20:
-        alerts.append(f"⚠️ Energy naik {energy_chg:.1f}% vs bulan lalu. Cek konsumsi listrik/LPG/air.")
+        alerts.append(f"⚠️ Energy cost increased {energy_chg:.1f}% vs last month. Check electricity, LPG, and water usage.")
 
     # --- Trend 3 bulan terakhir ---
     if len(summary_df) >= 3:
         last3_rev = summary_df.head(3)['total_revenue'].tolist()
         last3_net = summary_df.head(3)['net_income'].tolist()
         if all(last3_net[i] > last3_net[i+1] for i in range(2)):
-            positives.append(f"✅ Net Income tumbuh konsisten 3 bulan berturut-turut")
+            positives.append(f"✅ Net income has grown consistently for 3 consecutive months")
         months_neg = [summary_df.iloc[i]['month'] for i in range(min(6, len(summary_df))) if summary_df.iloc[i]['net_income'] < 0]
         if months_neg:
-            alerts.append(f"⚠️ Bulan dengan Net Income negatif dalam 6 bulan terakhir: {', '.join(months_neg)}")
+            alerts.append(f"⚠️ Months with negative net income in the last 6 months: {', '.join(months_neg)}")
 
     # --- Summary text ---
     lines = [
@@ -231,9 +231,9 @@ def build_insights_from_pnl(summary_df: pd.DataFrame) -> dict:
         f"",
     ]
     if positives:
-        lines += ["🟢 POSITIF:"] + [f"  {p}" for p in positives] + [""]
+        lines += ["🟢 POSITIVE:"] + [f"  {p}" for p in positives] + [""]
     if alerts:
-        lines += ["🔴 PERHATIAN:"] + [f"  {a}" for a in alerts] + [""]
+        lines += ["🔴 ATTENTION:"] + [f"  {a}" for a in alerts] + [""]
     if insights:
         lines += ["💡 INFO:"] + [f"  {i}" for i in insights]
 

@@ -49,26 +49,26 @@ except Exception as e:
     st.stop()
 
 def fmt_idr(v):
-    if abs(v) >= 1e9: return f"Rp {v/1e9:.2f}M"
-    if abs(v) >= 1e6: return f"Rp {v/1e6:.1f} jt"
+    if abs(v) >= 1e9: return f"Rp {v/1e9:.2f}B"
+    if abs(v) >= 1e6: return f"Rp {v/1e6:.1f}M"
     return f"Rp {v:,.0f}"
 
 # ── Sidebar ────────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("### 🏨 Resort P&L\nDashboard")
     st.markdown("---")
-    selected = st.selectbox("📅 Bulan Aktif", summary['month'].tolist(), index=0)
+    selected = st.selectbox("📅 Active Month", summary['month'].tolist(), index=0)
     st.markdown("---")
-    show_raw = st.checkbox("Tampilkan Data Mentah", value=False)
+    show_raw = st.checkbox("Show Raw Data", value=False)
     if st.button("🔄 Refresh"):
         st.cache_data.clear()
         st.rerun()
     st.markdown("---")
-    st.caption("Sumber: PNL.xlsx")
+    st.caption("Source: PNL.xlsx")
 
 # ── Header ─────────────────────────────────────────────────────────────────────
 st.title("📊 Resort Financial Dashboard")
-st.caption(f"Data: Mar 2025 — Mar 2026 | {len(summary)} bulan | Aktif: **{selected}**")
+st.caption(f"Data: Mar 2025 — Mar 2026 | {len(summary)} months | Active: **{selected}**")
 
 row = summary[summary['month'] == selected].iloc[0]
 idx = summary[summary['month'] == selected].index[0]
@@ -95,7 +95,7 @@ st.markdown("---")
 # ── Chart 1: Revenue & Profit Trend ───────────────────────────────────────────
 col1, col2 = st.columns([3, 2])
 with col1:
-    st.subheader("📈 Revenue & Income Trend (Rp Juta)")
+    st.subheader("📈 Revenue & Income Trend (Rp Million)")
     fig = go.Figure()
     x = summary['month'][::-1]
 
@@ -147,7 +147,7 @@ with col3:
         st.plotly_chart(fig3, use_container_width=True)
 
 with col4:
-    st.subheader("💰 Revenue per Segmen (Trend)")
+    st.subheader("💰 Revenue by Segment (Trend)")
     segments = revenue_breakdown['segment'].unique()
     fig4 = go.Figure()
     colors = px.colors.qualitative.Set2
@@ -159,13 +159,13 @@ with col4:
             line=dict(color=colors[i % len(colors)], width=2)
         ))
     fig4.update_layout(template='plotly_dark',
-                       yaxis=dict(title='Rp Juta'),
+                       yaxis=dict(title='Rp Million'),
                        legend=dict(orientation='h', y=-0.25),
                        margin=dict(l=0,r=0,t=10,b=0), height=320)
     st.plotly_chart(fig4, use_container_width=True)
 
 # ── Cost Efficiency Chart ──────────────────────────────────────────────────────
-st.subheader("⚖️ Cost Efficiency (%  dari Revenue)")
+st.subheader("⚖️ Cost Efficiency (% of Revenue)")
 fig5 = go.Figure()
 fig5.add_trace(go.Bar(x=x, y=summary['cogs_%'][::-1], name='COGS %',
                       marker_color='#EF5350'))
@@ -187,13 +187,13 @@ st.markdown("---")
 st.subheader("🤖 Auto Insight Generator")
 ins = build_insights_from_pnl(summary)
 
-t1, t2, t3 = st.tabs(["🔴 Alerts", "🟢 Positif", "💡 Info"])
+t1, t2, t3 = st.tabs(["🔴 Alerts", "🟢 Positive", "💡 Info"])
 with t1:
     if ins['alerts']:
         for a in ins['alerts']:
             st.markdown(f'<div class="alert">{a}</div>', unsafe_allow_html=True)
     else:
-        st.success("Tidak ada alert.")
+        st.success("No alerts.")
 with t2:
     for p in ins['positives']:
         st.markdown(f'<div class="positive">{p}</div>', unsafe_allow_html=True)
@@ -204,7 +204,7 @@ with t3:
 # ── Raw Data ──────────────────────────────────────────────────────────────────
 if show_raw:
     st.markdown("---")
-    st.subheader("📋 Data Lengkap P&L Summary")
+    st.subheader("📋 Full P&L Summary Data")
     st.dataframe(summary.style.format({
         col: "{:,.0f}" for col in summary.columns if summary[col].dtype in ['float64','int64']
         and '%' not in col
